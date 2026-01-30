@@ -1,73 +1,142 @@
-# Welcome to your Lovable project
+# 🖥️ Desktop Domination — Electron Overlay System
 
-## Project info
+Système d'overlay desktop sans fenêtres traditionnelles — des surfaces UI flottantes et transparentes qui vivent sur le bureau comme un HUD sci-fi.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+## Quick Start (Local)
 
-## How can I edit this code?
+```bash
+# 1. Install dependencies
+npm install
 
-There are several ways of editing your application.
+# 2. Install Electron
+npm install electron electron-builder concurrently wait-on --save-dev
 
-**Use Lovable**
+# 3. Add scripts to package.json (see below)
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+# 4. Run in dev mode
+npm run electron:dev
 
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+# 5. Build for distribution
+npm run electron:build
 ```
 
-**Edit a file directly in GitHub**
+## Scripts to Add to package.json
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+```json
+{
+  "main": "electron/main.js",
+  "scripts": {
+    "electron:dev": "concurrently \"npm run dev\" \"wait-on http://localhost:5173 && tsc -p electron/tsconfig.json && electron .\"",
+    "electron:build": "npm run build && tsc -p electron/tsconfig.json && electron-builder",
+    "electron:preview": "npm run build && tsc -p electron/tsconfig.json && electron ."
+  }
+}
+```
 
-**Use GitHub Codespaces**
+## Create electron/tsconfig.json
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+```json
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "commonjs",
+    "lib": ["ES2020"],
+    "outDir": "./",
+    "rootDir": "./",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true
+  },
+  "include": ["./**/*.ts"],
+  "exclude": ["node_modules"]
+}
+```
 
-## What technologies are used for this project?
+## Project Structure
 
-This project is built with:
+```
+├── electron/
+│   ├── main.ts          # Electron entry point
+│   ├── widgetManager.ts # Widget lifecycle management
+│   ├── preload.ts       # IPC bridge (renderer ↔ main)
+│   └── tray.ts          # System tray menu
+│
+├── src/
+│   ├── widgets/         # Demo widget components
+│   │   ├── StatusWidget.tsx
+│   │   ├── AssistantWidget.tsx
+│   │   ├── MicWidget.tsx
+│   │   └── CommandWidget.tsx
+│   │
+│   ├── styles/
+│   │   └── terminal.css # Sci-fi terminal design system
+│   │
+│   └── lib/
+│       └── electron.ts  # Type definitions & hooks
+│
+├── electron-builder.json # Build configuration
+└── README.md
+```
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+## Widget API (from renderer)
 
-## How can I deploy this project?
+```typescript
+// Check if running in Electron
+if (window.isElectron) {
+  // Create a widget
+  const widgetId = await window.electron.widgets.create({
+    type: 'assistant',
+    x: 100,
+    y: 100,
+    width: 400,
+    height: 300,
+  });
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+  // Move widget
+  await window.electron.widgets.move(widgetId, { x: 200, y: 200 });
 
-## Can I connect a custom domain to my Lovable project?
+  // Toggle passthrough (clicks pass through)
+  await window.electron.widgets.setPassthrough(widgetId, true);
 
-Yes, you can!
+  // Destroy widget
+  await window.electron.widgets.destroy(widgetId);
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+  // Listen for events
+  const unsubscribe = window.electron.on('widget:created', (data) => {
+    console.log('Widget created:', data);
+  });
+}
+```
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+## Hotkeys
+
+| Shortcut | Action |
+|----------|--------|
+| `Ctrl+Shift+W` | Toggle all widgets visibility |
+| `Ctrl+Shift+Q` | Quick spawn Assistant widget |
+
+## Widget Types
+
+- **status** — System stats display (CPU, RAM, uptime)
+- **assistant** — AI response area with typing effect
+- **mic** — Audio visualizer with states
+- **command** — Floating terminal input
+
+## Design System (terminal.css)
+
+- CRT scanline effects
+- Phosphor green glow (`#00ff41`)
+- Glitch text animations
+- Pulse indicators
+- Data stream animations
+- Noise grain overlay
+
+## Tips
+
+1. Widgets are frameless, transparent `BrowserWindow` instances
+2. Use `-webkit-app-region: drag` on headers for dragging
+3. Toggle `setIgnoreMouseEvents` for passthrough mode
+4. Each widget loads a different route (`/widgets/status`, etc.)
+5. HashRouter is used for Electron file:// protocol compatibility

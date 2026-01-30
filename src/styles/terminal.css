@@ -1,0 +1,391 @@
+/* 
+ * 🖥️ SCI-FI TERMINAL DESIGN SYSTEM
+ * Phosphor green CRT aesthetic
+ */
+
+/* ═══════════════════════════════════════════════════════════════
+   FONTS
+   ═══════════════════════════════════════════════════════════════ */
+
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&display=swap');
+
+/* ═══════════════════════════════════════════════════════════════
+   CSS VARIABLES - TERMINAL THEME
+   ═══════════════════════════════════════════════════════════════ */
+
+:root {
+  /* Core colors */
+  --terminal-bg: #0a0f0a;
+  --terminal-bg-translucent: rgba(10, 15, 10, 0.85);
+  --terminal-primary: #00ff41;
+  --terminal-primary-dim: #0d6832;
+  --terminal-accent: #39ff14;
+  --terminal-text: #b5ffb5;
+  --terminal-text-dim: #4a7c4a;
+  --terminal-border: #1a3a1a;
+  --terminal-glow: rgba(0, 255, 65, 0.4);
+  
+  /* Scanline effect */
+  --scanline-opacity: 0.03;
+  --scanline-size: 2px;
+  
+  /* Animation timings */
+  --pulse-duration: 2s;
+  --flicker-duration: 0.15s;
+  --typing-speed: 50ms;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   BASE WIDGET STYLES
+   ═══════════════════════════════════════════════════════════════ */
+
+.terminal-widget {
+  font-family: 'JetBrains Mono', monospace;
+  background: var(--terminal-bg-translucent);
+  color: var(--terminal-text);
+  border: 1px solid var(--terminal-border);
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
+  
+  /* CRT glow effect */
+  box-shadow: 
+    0 0 10px var(--terminal-glow),
+    inset 0 0 20px rgba(0, 255, 65, 0.05);
+}
+
+.terminal-widget::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent var(--scanline-size),
+    rgba(0, 0, 0, var(--scanline-opacity)) var(--scanline-size),
+    rgba(0, 0, 0, var(--scanline-opacity)) calc(var(--scanline-size) * 2)
+  );
+  pointer-events: none;
+  z-index: 100;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   TEXT EFFECTS
+   ═══════════════════════════════════════════════════════════════ */
+
+.terminal-text {
+  color: var(--terminal-primary);
+  text-shadow: 
+    0 0 5px var(--terminal-primary),
+    0 0 10px var(--terminal-glow);
+}
+
+.terminal-text-dim {
+  color: var(--terminal-text-dim);
+}
+
+.terminal-text-accent {
+  color: var(--terminal-accent);
+  text-shadow: 
+    0 0 8px var(--terminal-accent),
+    0 0 15px rgba(57, 255, 20, 0.5);
+}
+
+/* Typing cursor effect */
+.terminal-cursor {
+  display: inline-block;
+  width: 0.6em;
+  height: 1.1em;
+  background: var(--terminal-primary);
+  margin-left: 2px;
+  animation: cursor-blink 1s step-end infinite;
+}
+
+@keyframes cursor-blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   GLOW & PULSE EFFECTS
+   ═══════════════════════════════════════════════════════════════ */
+
+.glow-border {
+  box-shadow: 
+    0 0 5px var(--terminal-primary),
+    0 0 10px var(--terminal-glow),
+    inset 0 0 5px rgba(0, 255, 65, 0.1);
+  animation: border-pulse var(--pulse-duration) ease-in-out infinite;
+}
+
+@keyframes border-pulse {
+  0%, 100% { 
+    box-shadow: 
+      0 0 5px var(--terminal-primary),
+      0 0 10px var(--terminal-glow),
+      inset 0 0 5px rgba(0, 255, 65, 0.1);
+  }
+  50% { 
+    box-shadow: 
+      0 0 10px var(--terminal-primary),
+      0 0 20px var(--terminal-glow),
+      inset 0 0 10px rgba(0, 255, 65, 0.2);
+  }
+}
+
+.pulse-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--terminal-primary);
+  animation: indicator-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes indicator-pulse {
+  0%, 100% { 
+    transform: scale(1);
+    opacity: 1;
+    box-shadow: 0 0 5px var(--terminal-primary);
+  }
+  50% { 
+    transform: scale(1.3);
+    opacity: 0.7;
+    box-shadow: 0 0 15px var(--terminal-primary);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   FLICKER & GLITCH EFFECTS
+   ═══════════════════════════════════════════════════════════════ */
+
+.flicker {
+  animation: flicker-effect 4s linear infinite;
+}
+
+@keyframes flicker-effect {
+  0%, 97%, 100% { opacity: 1; }
+  98% { opacity: 0.8; }
+  99% { opacity: 0.9; }
+}
+
+.glitch-text {
+  position: relative;
+}
+
+.glitch-text::before,
+.glitch-text::after {
+  content: attr(data-text);
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.glitch-text::before {
+  animation: glitch-1 2s infinite linear alternate-reverse;
+  clip-path: polygon(0 0, 100% 0, 100% 35%, 0 35%);
+  color: var(--terminal-accent);
+}
+
+.glitch-text::after {
+  animation: glitch-2 3s infinite linear alternate-reverse;
+  clip-path: polygon(0 65%, 100% 65%, 100% 100%, 0 100%);
+  color: var(--terminal-primary-dim);
+}
+
+@keyframes glitch-1 {
+  0%, 90%, 100% { transform: translate(0); }
+  92% { transform: translate(-2px, 1px); }
+  94% { transform: translate(2px, -1px); }
+}
+
+@keyframes glitch-2 {
+  0%, 85%, 100% { transform: translate(0); }
+  87% { transform: translate(2px, 1px); }
+  89% { transform: translate(-2px, -1px); }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   NOISE & GRAIN OVERLAY
+   ═══════════════════════════════════════════════════════════════ */
+
+.noise-overlay {
+  position: relative;
+}
+
+.noise-overlay::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  opacity: 0.02;
+  pointer-events: none;
+  animation: noise-shift 0.5s steps(10) infinite;
+}
+
+@keyframes noise-shift {
+  0% { transform: translate(0, 0); }
+  100% { transform: translate(-10%, -10%); }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   DATA STREAM ANIMATION
+   ═══════════════════════════════════════════════════════════════ */
+
+.data-stream {
+  font-size: 10px;
+  line-height: 1.2;
+  color: var(--terminal-text-dim);
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.data-stream-line {
+  animation: stream-scroll 3s linear infinite;
+  opacity: 0.6;
+}
+
+@keyframes stream-scroll {
+  0% { transform: translateX(100%); }
+  100% { transform: translateX(-100%); }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   WIDGET HEADER
+   ═══════════════════════════════════════════════════════════════ */
+
+.terminal-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: rgba(0, 255, 65, 0.05);
+  border-bottom: 1px solid var(--terminal-border);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.terminal-header-title {
+  color: var(--terminal-primary);
+  font-weight: 600;
+}
+
+.terminal-header-status {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   INPUT STYLES
+   ═══════════════════════════════════════════════════════════════ */
+
+.terminal-input {
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--terminal-border);
+  color: var(--terminal-primary);
+  font-family: 'JetBrains Mono', monospace;
+  padding: 8px 12px;
+  width: 100%;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.terminal-input:focus {
+  border-color: var(--terminal-primary);
+  box-shadow: 0 0 10px var(--terminal-glow);
+}
+
+.terminal-input::placeholder {
+  color: var(--terminal-text-dim);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   PROGRESS & BARS
+   ═══════════════════════════════════════════════════════════════ */
+
+.terminal-progress {
+  height: 4px;
+  background: var(--terminal-border);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.terminal-progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, var(--terminal-primary-dim), var(--terminal-primary));
+  box-shadow: 0 0 10px var(--terminal-glow);
+  transition: width 0.3s ease;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   AUDIO VISUALIZER SHAPES
+   ═══════════════════════════════════════════════════════════════ */
+
+.audio-bar {
+  background: var(--terminal-primary);
+  box-shadow: 0 0 5px var(--terminal-glow);
+  animation: audio-bounce 0.5s ease-in-out infinite alternate;
+}
+
+@keyframes audio-bounce {
+  0% { transform: scaleY(0.3); }
+  100% { transform: scaleY(1); }
+}
+
+.audio-ring {
+  border: 2px solid var(--terminal-primary);
+  border-radius: 50%;
+  animation: ring-pulse 1s ease-out infinite;
+}
+
+@keyframes ring-pulse {
+  0% { 
+    transform: scale(0.8);
+    opacity: 1;
+  }
+  100% { 
+    transform: scale(1.5);
+    opacity: 0;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   UTILITY CLASSES
+   ═══════════════════════════════════════════════════════════════ */
+
+.terminal-mono {
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.terminal-fade-in {
+  animation: fade-in 0.3s ease-out;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.terminal-content {
+  padding: 12px;
+}
+
+/* Drag handle for widgets */
+.drag-handle {
+  cursor: move;
+  -webkit-app-region: drag;
+}
+
+.no-drag {
+  -webkit-app-region: no-drag;
+}
