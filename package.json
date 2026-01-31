@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "main": "electron/main.cjs",
   "scripts": {
-    "electron:dev": "concurrently \"npm run dev\" \"wait-on http://localhost:5173 && tsc -p electron/tsconfig.json && electron .\"",
+    "electron:dev": "concurrently \"npm run dev\" \"wait-on http://localhost:8080 && tsc -p electron/tsconfig.json && electron .\"",
     "electron:build": "npm run build && tsc -p electron/tsconfig.json && electron-builder",
     "electron:preview": "npm run build && tsc -p electron/tsconfig.json && electron .",
     "dev": "vite",

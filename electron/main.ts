@@ -74,8 +74,8 @@ app.whenReady().then(async () => {
   
   const widgetId = widgetManager.createWidget({
     type: 'status',
-    x: screenWidth - 320,
-    y: screenHeight - 200,
+    x: 320,
+    y: 200,
     width: 300,
     height: 180,
     alwaysOnTop: true,
@@ -97,8 +97,8 @@ app.on('activate', () => {
     const { width: screenWidth, height: screenHeight } = screen.getPrimaryDisplay().workAreaSize;
     widgetManager.createWidget({
       type: 'status',
-      x: screenWidth - 320,
-      y: screenHeight - 200,
+      x: 320,
+      y: 200,
       width: 300,
       height: 180,
     });

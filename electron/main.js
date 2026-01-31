@@ -57,8 +57,8 @@ electron_1.app.whenReady().then(async () => {
     console.log('[DESKTOP DOMINATION] Spawning initial status widget...');
     const widgetId = widgetManager.createWidget({
         type: 'status',
-        x: screenWidth - 320,
-        y: screenHeight - 200,
+        x: 320,
+        y: 200,
         width: 300,
         height: 180,
         alwaysOnTop: true,
@@ -76,8 +76,8 @@ electron_1.app.on('activate', () => {
         const { width: screenWidth, height: screenHeight } = electron_1.screen.getPrimaryDisplay().workAreaSize;
         widgetManager.createWidget({
             type: 'status',
-            x: screenWidth - 320,
-            y: screenHeight - 200,
+            x: 320,
+            y: 200,
             width: 300,
             height: 180,
         });

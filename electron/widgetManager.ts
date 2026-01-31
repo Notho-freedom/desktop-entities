@@ -40,8 +40,9 @@ export class WidgetManager {
       console.log('[WidgetManager] Loading dev URL:', url);
       return url;
     }
-    // Production: load from file
-    const url = `file://${path.join(__dirname, '../dist/index.html')}#${route}`;
+    // Production: load from file - FIXED for Windows
+    const distPath = path.join(__dirname, '..', 'dist', 'index.html');
+    const url = `file:///${distPath.replace(/\\/g, '/')}#${route}`;
     console.log('[WidgetManager] Loading production URL:', url);
     return url;
   }
@@ -51,31 +52,33 @@ export class WidgetManager {
     
     console.log(`[WidgetManager] Creating widget ${id}:`, config);
     
+    // DEBUGGING: Force non-transparent for testing
+    const isProduction = !this.devServerUrl;
+    const useTransparency = false; // CHANGED: Disable transparency for debugging
+    
     const win = new BrowserWindow({
       x: config.x,
       y: config.y,
       width: config.width,
       height: config.height,
-      frame: false,
-      transparent: true,
+      frame: !useTransparency, // Show frame if not transparent
+      transparent: useTransparency,
       resizable: true,
       alwaysOnTop: config.alwaysOnTop !== false,
-      skipTaskbar: true,
+      skipTaskbar: false, // CHANGED: Show in taskbar for debugging
       focusable: true,
-      hasShadow: false,
-      backgroundColor: '#00000000',
+      hasShadow: true,
+      backgroundColor: useTransparency ? '#00000000' : '#0a0f0a', // Dark background for testing
       webPreferences: {
         contextIsolation: true,
         nodeIntegration: false,
         preload: path.join(__dirname, 'preload.js'),
-        devTools: true, // Enable DevTools
+        devTools: true, // Always enable DevTools
       },
     });
 
     // CRITICAL: Make sure window is visible
     win.setOpacity(1.0);
-    win.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
-    win.setAlwaysOnTop(true, 'floating');
     
     // Set passthrough mode if requested
     if (config.passthrough) {
@@ -85,22 +88,35 @@ export class WidgetManager {
     // Load the widget URL
     const url = this.getWidgetUrl(config.type);
     
+    console.log('[WidgetManager] About to load URL:', url);
+    
     win.loadURL(url).then(() => {
       console.log(`[WidgetManager] Widget ${id} loaded successfully`);
       win.show(); // Explicitly show the window
       win.focus(); // Give it focus initially
+      
+      // ALWAYS open DevTools for debugging
+      win.webContents.openDevTools({ mode: 'detach' });
+      
+      console.log(`[WidgetManager] Widget ${id} is now visible:`, win.isVisible());
+      console.log(`[WidgetManager] Widget ${id} bounds:`, win.getBounds());
     }).catch((err) => {
       console.error(`[WidgetManager] Failed to load widget ${id}:`, err);
     });
 
-    // Open DevTools in dev mode
-    if (this.devServerUrl) {
-      win.webContents.openDevTools({ mode: 'detach' });
-    }
-
     // Log console messages from the renderer
-    win.webContents.on('console-message', (event, level, message) => {
+    win.webContents.on('console-message', (event, level, message, line, sourceId) => {
       console.log(`[Widget ${id}] ${message}`);
+    });
+
+    // Log when page finishes loading
+    win.webContents.on('did-finish-load', () => {
+      console.log(`[WidgetManager] Widget ${id} finished loading`);
+    });
+
+    // Log navigation errors
+    win.webContents.on('did-fail-load', (event, errorCode, errorDescription) => {
+      console.error(`[WidgetManager] Widget ${id} failed to load:`, errorCode, errorDescription);
     });
 
     // Handle window close
