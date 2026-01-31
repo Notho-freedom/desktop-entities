@@ -3,8 +3,17 @@ import * as path from 'path';
 import { WidgetManager } from './widgetManager';
 import { setupTray } from './tray';
 
+// Handle creating/removing shortcuts on Windows when installing/uninstalling
+if (require('electron-squirrel-startup')) {
+  app.quit();
+}
+
 const isDev = process.env.NODE_ENV === 'development';
-const VITE_DEV_SERVER_URL = 'http://localhost:8080';
+const VITE_DEV_SERVER_URL = process.env.VITE_DEV_SERVER_URL || 'http://localhost:8080';
+
+console.log('[DESKTOP DOMINATION] Starting...');
+console.log('[DESKTOP DOMINATION] isDev:', isDev);
+console.log('[DESKTOP DOMINATION] Dev server URL:', VITE_DEV_SERVER_URL);
 
 let widgetManager: WidgetManager;
 
@@ -46,6 +55,8 @@ async function createWidgetManager() {
 }
 
 app.whenReady().then(async () => {
+  console.log('[DESKTOP DOMINATION] App ready');
+  
   await createWidgetManager();
   
   // Setup system tray
@@ -53,10 +64,12 @@ app.whenReady().then(async () => {
 
   // Register global hotkeys
   globalShortcut.register('CommandOrControl+Shift+W', () => {
+    console.log('[DESKTOP DOMINATION] Hotkey: Toggle visibility');
     widgetManager.toggleAllVisibility();
   });
 
   globalShortcut.register('CommandOrControl+Shift+Q', () => {
+    console.log('[DESKTOP DOMINATION] Hotkey: Spawn assistant');
     widgetManager.createWidget({
       type: 'assistant',
       x: 100,
@@ -66,7 +79,7 @@ app.whenReady().then(async () => {
     });
   });
 
-  // ALWAYS spawn at least one initial widget on startup
+  // ALWAYS spawn initial widget on startup (both dev and production)
   const { width: screenWidth, height: screenHeight } = screen.getPrimaryDisplay().workAreaSize;
   
   console.log(`[DESKTOP DOMINATION] Screen size: ${screenWidth}x${screenHeight}`);
@@ -74,14 +87,14 @@ app.whenReady().then(async () => {
   
   const widgetId = widgetManager.createWidget({
     type: 'status',
-    x: 320,
-    y: 200,
+    x: screenWidth - 350,
+    y: screenHeight - 230,
     width: 300,
     height: 180,
     alwaysOnTop: true,
   });
   
-  console.log(`[DESKTOP DOMINATION] Widget created with ID: ${widgetId}`);
+  console.log(`[DESKTOP DOMINATION] Initial widget created: ${widgetId}`);
 });
 
 app.on('will-quit', () => {
@@ -90,15 +103,17 @@ app.on('will-quit', () => {
 
 app.on('window-all-closed', () => {
   // Don't quit - we're a tray app
+  // Only quit explicitly via tray menu
 });
 
 app.on('activate', () => {
+  // On macOS, re-create widgets if none exist
   if (widgetManager && widgetManager.listWidgets().length === 0) {
     const { width: screenWidth, height: screenHeight } = screen.getPrimaryDisplay().workAreaSize;
     widgetManager.createWidget({
       type: 'status',
-      x: 320,
-      y: 200,
+      x: screenWidth - 350,
+      y: screenHeight - 230,
       width: 300,
       height: 180,
     });
@@ -110,7 +125,3 @@ const gotTheLock = app.requestSingleInstanceLock();
 if (!gotTheLock) {
   app.quit();
 }
-
-app.on('window-all-closed', () => {
-  app.quit()
-})

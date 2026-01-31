@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import '@/index.css';
 import '@/styles/terminal.css';
 
 interface HistoryItem {
@@ -91,7 +92,7 @@ export default function CommandWidget() {
   };
 
   return (
-    <div className="terminal-widget w-full h-full flex items-center noise-overlay glow-border">
+    <div data-widget="command" className="widget-root terminal-widget w-full h-full flex items-center noise-overlay glow-border">
       <form onSubmit={handleSubmit} className="flex-1 flex items-center px-3 py-2 gap-2">
         {/* Prompt */}
         <span className="terminal-text font-bold text-lg">{'>'}</span>

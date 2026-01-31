@@ -103,3 +103,21 @@ All colors MUST be HSL.
     @apply bg-background text-foreground;
   }
 }
+
+/* Widget root styles - ensures widgets have proper terminal background */
+.widget-root {
+  background: var(--terminal-bg, #0a0f0a);
+  color: var(--terminal-primary, #00ff41);
+  min-height: 100vh;
+  min-width: 100vw;
+}
+
+/* Force terminal background on all widget routes */
+html:has([data-widget]) {
+  background: var(--terminal-bg, #0a0f0a) !important;
+}
+
+body:has([data-widget]) {
+  background: var(--terminal-bg, #0a0f0a) !important;
+  color: var(--terminal-primary, #00ff41) !important;
+}

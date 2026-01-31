@@ -1,4 +1,4 @@
-import { BrowserWindow, screen } from 'electron';
+import { app, BrowserWindow, screen } from 'electron';
 import * as path from 'path';
 
 export interface WidgetConfig {
@@ -19,6 +19,9 @@ interface Widget {
   visible: boolean;
 }
 
+// Debug mode: set DEBUG_WIDGETS=true to show window frames and DevTools
+const DEBUG_MODE = process.env.DEBUG_WIDGETS === 'true';
+
 export class WidgetManager {
   private widgets: Map<string, Widget> = new Map();
   private devServerUrl?: string;
@@ -26,7 +29,10 @@ export class WidgetManager {
 
   constructor(devServerUrl?: string) {
     this.devServerUrl = devServerUrl;
-    console.log('[WidgetManager] Initialized with devServerUrl:', devServerUrl || 'production');
+    console.log('[WidgetManager] Initialized');
+    console.log('[WidgetManager] Dev server URL:', devServerUrl || 'PRODUCTION MODE');
+    console.log('[WidgetManager] Debug mode:', DEBUG_MODE);
+    console.log('[WidgetManager] App path:', app.getAppPath());
   }
 
   private generateId(): string {
@@ -35,49 +41,63 @@ export class WidgetManager {
 
   private getWidgetUrl(type: string): string {
     const route = `/widgets/${type}`;
+    
     if (this.devServerUrl) {
+      // Development: use Vite dev server with hash routing
       const url = `${this.devServerUrl}/#${route}`;
-      console.log('[WidgetManager] Loading dev URL:', url);
+      console.log('[WidgetManager] Loading DEV URL:', url);
       return url;
     }
-    // Production: load from file - FIXED for Windows
-    const distPath = path.join(__dirname, '..', 'dist', 'index.html');
-    const url = `file:///${distPath.replace(/\\/g, '/')}#${route}`;
-    console.log('[WidgetManager] Loading production URL:', url);
+    
+    // Production: use app.getAppPath() for reliable path resolution
+    const appPath = app.getAppPath();
+    const distPath = path.join(appPath, 'dist', 'index.html');
+    
+    // Use file:// protocol with proper path formatting
+    const normalizedPath = distPath.replace(/\\/g, '/');
+    const url = process.platform === 'win32' 
+      ? `file:///${normalizedPath}#${route}`
+      : `file://${normalizedPath}#${route}`;
+    
+    console.log('[WidgetManager] Loading PRODUCTION URL:', url);
+    console.log('[WidgetManager] App path:', appPath);
+    console.log('[WidgetManager] Dist path:', distPath);
+    
     return url;
   }
 
   createWidget(config: WidgetConfig): string {
     const id = config.id || this.generateId();
     
-    console.log(`[WidgetManager] Creating widget ${id}:`, config);
+    console.log(`[WidgetManager] Creating widget ${id}:`, JSON.stringify(config));
     
-    // DEBUGGING: Force non-transparent for testing
-    const isProduction = !this.devServerUrl;
-    const useTransparency = false; // CHANGED: Disable transparency for debugging
+    // Transparency: enabled by default, disabled in debug mode
+    const useTransparency = !DEBUG_MODE;
+    
+    console.log(`[WidgetManager] Transparency: ${useTransparency}`);
     
     const win = new BrowserWindow({
       x: config.x,
       y: config.y,
       width: config.width,
       height: config.height,
-      frame: !useTransparency, // Show frame if not transparent
+      frame: DEBUG_MODE, // Show frame only in debug mode
       transparent: useTransparency,
       resizable: true,
       alwaysOnTop: config.alwaysOnTop !== false,
-      skipTaskbar: false, // CHANGED: Show in taskbar for debugging
+      skipTaskbar: !DEBUG_MODE, // Show in taskbar only in debug mode
       focusable: true,
-      hasShadow: true,
-      backgroundColor: useTransparency ? '#00000000' : '#0a0f0a', // Dark background for testing
+      hasShadow: !useTransparency,
+      backgroundColor: useTransparency ? '#00000000' : '#0a0f0a',
       webPreferences: {
         contextIsolation: true,
         nodeIntegration: false,
         preload: path.join(__dirname, 'preload.js'),
-        devTools: true, // Always enable DevTools
+        devTools: true,
       },
     });
 
-    // CRITICAL: Make sure window is visible
+    // Ensure window is visible
     win.setOpacity(1.0);
     
     // Set passthrough mode if requested
@@ -88,35 +108,37 @@ export class WidgetManager {
     // Load the widget URL
     const url = this.getWidgetUrl(config.type);
     
-    console.log('[WidgetManager] About to load URL:', url);
-    
     win.loadURL(url).then(() => {
-      console.log(`[WidgetManager] Widget ${id} loaded successfully`);
-      win.show(); // Explicitly show the window
-      win.focus(); // Give it focus initially
+      console.log(`[WidgetManager] Widget ${id} URL loaded successfully`);
+      win.show();
       
-      // ALWAYS open DevTools for debugging
-      win.webContents.openDevTools({ mode: 'detach' });
+      // Open DevTools in debug mode
+      if (DEBUG_MODE) {
+        win.webContents.openDevTools({ mode: 'detach' });
+      }
       
-      console.log(`[WidgetManager] Widget ${id} is now visible:`, win.isVisible());
-      console.log(`[WidgetManager] Widget ${id} bounds:`, win.getBounds());
+      console.log(`[WidgetManager] Widget ${id} visible: ${win.isVisible()}, bounds:`, win.getBounds());
     }).catch((err) => {
-      console.error(`[WidgetManager] Failed to load widget ${id}:`, err);
+      console.error(`[WidgetManager] FAILED to load widget ${id}:`, err);
     });
 
     // Log console messages from the renderer
     win.webContents.on('console-message', (event, level, message, line, sourceId) => {
-      console.log(`[Widget ${id}] ${message}`);
+      const levelStr = ['DEBUG', 'INFO', 'WARN', 'ERROR'][level] || 'LOG';
+      console.log(`[Widget:${config.type}] [${levelStr}] ${message}`);
     });
 
     // Log when page finishes loading
     win.webContents.on('did-finish-load', () => {
-      console.log(`[WidgetManager] Widget ${id} finished loading`);
+      console.log(`[WidgetManager] Widget ${id} (${config.type}) finished loading`);
     });
 
     // Log navigation errors
-    win.webContents.on('did-fail-load', (event, errorCode, errorDescription) => {
-      console.error(`[WidgetManager] Widget ${id} failed to load:`, errorCode, errorDescription);
+    win.webContents.on('did-fail-load', (event, errorCode, errorDescription, validatedURL) => {
+      console.error(`[WidgetManager] Widget ${id} FAILED to load:`);
+      console.error(`  Error code: ${errorCode}`);
+      console.error(`  Description: ${errorDescription}`);
+      console.error(`  URL: ${validatedURL}`);
     });
 
     // Handle window close

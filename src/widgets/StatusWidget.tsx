@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import '@/index.css';
 import '@/styles/terminal.css';
 
 interface SystemStats {
@@ -52,7 +53,7 @@ export default function StatusWidget() {
   }, []);
 
   return (
-    <div className="terminal-widget w-full h-full flex flex-col noise-overlay">
+    <div data-widget="status" className="widget-root terminal-widget w-full h-full flex flex-col noise-overlay">
       {/* Header */}
       <div className="terminal-header drag-handle">
         <span className="terminal-header-title">◈ SYS_STATUS</span>
