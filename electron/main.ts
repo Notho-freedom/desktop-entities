@@ -110,3 +110,7 @@ const gotTheLock = app.requestSingleInstanceLock();
 if (!gotTheLock) {
   app.quit();
 }
+
+app.on('window-all-closed', () => {
+  app.quit()
+})
