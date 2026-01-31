@@ -99,25 +99,23 @@ All colors MUST be HSL.
     @apply border-border;
   }
 
+  html,
+  body,
+  #root {
+    height: 100%;
+    width: 100%;
+  }
+
   body {
     @apply bg-background text-foreground;
+    margin: 0;
   }
 }
 
 /* Widget root styles - ensures widgets have proper terminal background */
 .widget-root {
-  background: var(--terminal-bg, #0a0f0a);
-  color: var(--terminal-primary, #00ff41);
+  background: var(--terminal-bg, hsl(120 20% 5%));
+  color: var(--terminal-primary, hsl(135 100% 50%));
   min-height: 100vh;
   min-width: 100vw;
-}
-
-/* Force terminal background on all widget routes */
-html:has([data-widget]) {
-  background: var(--terminal-bg, #0a0f0a) !important;
-}
-
-body:has([data-widget]) {
-  background: var(--terminal-bg, #0a0f0a) !important;
-  color: var(--terminal-primary, #00ff41) !important;
 }

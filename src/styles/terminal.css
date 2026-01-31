@@ -15,15 +15,16 @@
 
 :root {
   /* Core colors */
-  --terminal-bg: #0a0f0a;
-  --terminal-bg-translucent: rgba(10, 15, 10, 0.85);
-  --terminal-primary: #00ff41;
-  --terminal-primary-dim: #0d6832;
-  --terminal-accent: #39ff14;
-  --terminal-text: #b5ffb5;
-  --terminal-text-dim: #4a7c4a;
-  --terminal-border: #1a3a1a;
-  --terminal-glow: rgba(0, 255, 65, 0.4);
+  /* All colors MUST be HSL */
+  --terminal-bg: hsl(120 20% 5%);
+  --terminal-bg-translucent: hsla(120 20% 5% / 0.85);
+  --terminal-primary: hsl(135 100% 50%);
+  --terminal-primary-dim: hsl(144 78% 23%);
+  --terminal-accent: hsl(111 100% 54%);
+  --terminal-text: hsl(120 100% 86%);
+  --terminal-text-dim: hsl(120 25% 39%);
+  --terminal-border: hsl(120 38% 16%);
+  --terminal-glow: hsla(135 100% 50% / 0.4);
   
   /* Scanline effect */
   --scanline-opacity: 0.03;
