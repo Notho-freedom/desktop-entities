@@ -1,125 +1,112 @@
 
+# Correction des Widgets Electron - Analyse et Plan
 
-# 🖥️ Desktop Domination — Electron Overlay System
+## Problèmes Identifiés
 
-## Vision
-Système d'overlay desktop sans fenêtres traditionnelles — des surfaces UI flottantes et transparentes qui vivent sur le bureau comme un HUD sci-fi.
+### 1. Conflit de fichiers main.cjs vs main.js
+Le `package.json` référence `"main": "electron/main.cjs"` mais tu as deux fichiers différents :
+- `main.cjs` (ligne 61-71) : spawn les widgets **seulement en mode dev** (`if (isDev)`)
+- `main.js` / `main.ts` : spawn toujours un widget au démarrage
 
----
+Le problème : en mode production, `main.cjs` ne crée AUCUN widget automatiquement.
 
-## 📁 Structure du Projet
-
-### Partie Electron (Main Process)
-- **`electron/main.ts`** — Point d'entrée Electron avec app lifecycle
-- **`electron/widgetManager.ts`** — Gestionnaire de widgets (create, move, destroy, toggle passthrough)
-- **`electron/preload.ts`** — Bridge IPC sécurisé pour la communication renderer ↔ main
-- **`electron/tray.ts`** — System tray optionnel pour contrôle global
-
-### Configuration
-- **`electron-builder.json`** — Config pour packager l'app
-- **`vite.config.electron.ts`** — Build config pour Electron + React
-
----
-
-## 🧩 Widgets Démo (Sci-Fi Terminal Style)
-
-### 1. Status Widget
-- Affiche l'état du système (CPU, RAM simulé)
-- Effet scanline + texte monospace vert phosphore
-- Animation de "data stream"
-
-### 2. Assistant Widget  
-- Zone de réponse IA avec effet de typage
-- Indicateur de "thinking" pulsant
-- Border glow animé
-
-### 3. Mic Widget
-- Visualisation audio simplifiée
-- États : idle / listening / processing
-- Forme géométrique réactive
-
-### 4. Command Input Widget
-- Input flottant style terminal
-- Historique des commandes
-- Auto-complete basique
-
----
-
-## 🎨 Design System Sci-Fi Terminal
-
-### Palette
-- Background : `#0a0f0a` (noir verdâtre profond)
-- Primary : `#00ff41` (vert phosphore classique)
-- Secondary : `#0d6832` (vert sombre)
-- Accent : `#39ff14` (vert néon intense)
-- Text : `#b5ffb5` (vert pâle pour lisibilité)
-
-### Effets
-- **Scanlines** — overlay CSS subtil
-- **CRT glow** — text-shadow multi-layer
-- **Noise grain** — animation CSS background
-- **Border flicker** — animation intermittente
-
-### Typographie
-- Font : `JetBrains Mono` ou `IBM Plex Mono`
-- Effet de glitch occasionnel sur les titres
-
----
-
-## 🔌 API de Communication (IPC)
-
-### Depuis les widgets (Renderer → Main)
-```
-electron.widgets.create({ type, x, y, width, height })
-electron.widgets.move(id, { x, y })
-electron.widgets.resize(id, { width, height })
-electron.widgets.destroy(id)
-electron.widgets.setPassthrough(id, boolean)
-electron.widgets.bringToFront(id)
+### 2. URL de chargement incorrecte en production
+Dans `widgetManager.ts` ligne 44-46, le chemin de production :
+```ts
+const distPath = path.join(__dirname, '..', 'dist', 'index.html');
+const url = `file:///${distPath.replace(/\\/g, '/')}#${route}`;
 ```
 
-### Événements (Main → Renderer)
+Ce chemin peut être incorrect selon où Electron s'exécute. `__dirname` dans un contexte Electron packagé pointe vers `resources/app/electron/`, pas vers la racine du projet.
+
+### 3. Mode transparent désactivé
+Dans `widgetManager.ts` ligne 57 :
+```ts
+const useTransparency = false; // CHANGED: Disable transparency for debugging
 ```
-electron.on('widget:created', callback)
-electron.on('widget:destroyed', callback)
-electron.on('system:hotkey', callback)
-```
+
+Cela force les fenêtres à avoir un fond opaque (`#0a0f0a`), mais si le contenu React ne se charge pas, tu vois juste une fenêtre noire.
+
+### 4. CSS Tailwind non chargé dans les widgets
+Le `body` dans `src/index.css` applique `@apply bg-background text-foreground` qui est blanc par défaut (mode light). Les widgets ont besoin du dark mode ou de styles explicites.
+
+### 5. Les widgets n'importent pas correctement les styles globaux
+Les widgets importent `@/styles/terminal.css` mais pas `@/index.css` où Tailwind est initialisé.
 
 ---
 
-## 🧪 Scénario de Démo
+## Corrections à Apporter
 
-1. **Au lancement** → Tray icon apparaît, pas de fenêtre visible
-2. **Click tray** → Menu pour spawner des widgets
-3. **Spawn "Status"** → Widget apparaît en bas à droite avec animations
-4. **Spawn "Assistant"** → Widget en haut à gauche, prêt pour input IA
-5. **Spawn "Mic"** → Petit widget flottant, visualise le "son"
-6. **Mode passthrough** → Toggle pour laisser passer les clics
+### Correction 1 : Synchroniser main.cjs avec main.ts
+Le fichier `main.cjs` doit toujours spawner un widget initial, pas seulement en dev.
+
+### Correction 2 : Fixer le chemin de production pour les widgets
+Utiliser `app.getAppPath()` au lieu de `__dirname` pour un chemin fiable.
+
+### Correction 3 : Appliquer les styles globaux aux widgets
+Chaque widget doit avoir le fond terminal appliqué via CSS.
+
+### Correction 4 : Gérer correctement le mode transparent vs debug
+Séparer clairement les deux modes avec une variable d'environnement.
+
+### Correction 5 : Ajouter des logs de diagnostic
+Pour voir exactement ce qui se passe quand les widgets sont créés.
 
 ---
 
-## 📦 Fichiers Livrés
+## Fichiers à Modifier
 
-| Fichier | Description |
+| Fichier | Modification |
 |---------|-------------|
-| `electron/main.ts` | Entry point Electron |
-| `electron/widgetManager.ts` | Logique de gestion des widgets |
-| `electron/preload.ts` | Bridge IPC sécurisé |
-| `src/widgets/StatusWidget.tsx` | Démo widget système |
-| `src/widgets/AssistantWidget.tsx` | Démo widget IA |
-| `src/widgets/MicWidget.tsx` | Démo widget micro |
-| `src/widgets/CommandWidget.tsx` | Démo input flottant |
-| `src/styles/terminal.css` | Design system sci-fi |
-| `package.json` | Scripts Electron ajoutés |
-| `electron-builder.json` | Config de build |
+| `electron/widgetManager.ts` | Fixer le chemin de production, améliorer les logs |
+| `electron/main.ts` | Toujours spawner un widget initial |
+| `src/widgets/StatusWidget.tsx` | Ajouter fond explicite pour debug |
+| `src/widgets/AssistantWidget.tsx` | Idem |
+| `src/widgets/MicWidget.tsx` | Idem |
+| `src/widgets/CommandWidget.tsx` | Idem |
+| `src/index.css` | Ajouter styles de base pour widgets |
 
 ---
 
-## 🚀 Pour Continuer en Local
+## Détails Techniques
 
-Une fois le code généré :
-1. `npm install electron electron-builder --save-dev`
-2. `npm run electron:dev` pour dev
-3. `npm run electron:build` pour packager
-4. Intègre tes vrais widgets à la place des démos
+### widgetManager.ts - Nouveau calcul du chemin
+
+```text
+// Avant (incorrect en production packagée)
+const distPath = path.join(__dirname, '..', 'dist', 'index.html');
+
+// Après (correct)
+import { app } from 'electron';
+const distPath = path.join(app.getAppPath(), 'dist', 'index.html');
+```
+
+### Widgets - Fond explicite
+
+Chaque widget recevra une classe CSS pour garantir un fond visible :
+```css
+.widget-root {
+  background: var(--terminal-bg);
+  min-height: 100vh;
+  min-width: 100vw;
+}
+```
+
+### Mode debug vs production
+
+Variable pour contrôler facilement :
+```ts
+const DEBUG_MODE = process.env.DEBUG_WIDGETS === 'true';
+const useTransparency = !DEBUG_MODE;
+```
+
+---
+
+## Résultat Attendu
+
+Après ces corrections :
+1. Les widgets s'affichent avec le fond vert terminal sci-fi
+2. En mode transparent, le fond est translucide avec les effets CRT
+3. Le chemin de production fonctionne correctement
+4. Les logs permettent de diagnostiquer les problèmes
 
