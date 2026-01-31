@@ -4,9 +4,7 @@ import { WidgetManager } from './widgetManager';
 import { setupTray } from './tray';
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling
-if (require('electron-squirrel-startup')) {
-  app.quit();
-}
+
 
 const isDev = process.env.NODE_ENV === 'development';
 const VITE_DEV_SERVER_URL = 'http://localhost:5173';
