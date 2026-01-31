@@ -4,7 +4,7 @@ import { WidgetManager } from './widgetManager';
 import { setupTray } from './tray';
 
 const isDev = process.env.NODE_ENV === 'development';
-const VITE_DEV_SERVER_URL = 'http://localhost:5173';
+const VITE_DEV_SERVER_URL = 'http://localhost:8080';
 
 let widgetManager: WidgetManager;
 
