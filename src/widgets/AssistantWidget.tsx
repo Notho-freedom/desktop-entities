@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import '@/index.css';
 import '@/styles/terminal.css';
 
 type AssistantState = 'idle' | 'thinking' | 'responding';
@@ -64,7 +65,7 @@ export default function AssistantWidget() {
   }, [state, response]);
 
   return (
-    <div className={`terminal-widget w-full h-full flex flex-col noise-overlay ${state === 'thinking' ? 'glow-border' : ''}`}>
+    <div data-widget="assistant" className={`widget-root terminal-widget w-full h-full flex flex-col noise-overlay ${state === 'thinking' ? 'glow-border' : ''}`}>
       {/* Header */}
       <div className="terminal-header drag-handle">
         <span className="terminal-header-title">◈ COGNITIVE_CORE</span>

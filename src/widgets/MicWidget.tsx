@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import '@/index.css';
 import '@/styles/terminal.css';
 
 type MicState = 'idle' | 'listening' | 'processing';
@@ -34,7 +35,7 @@ export default function MicWidget() {
   }, [state]);
 
   return (
-    <div className={`terminal-widget w-full h-full flex flex-col items-center justify-center noise-overlay ${state === 'listening' ? 'glow-border' : ''}`}>
+    <div data-widget="mic" className={`widget-root terminal-widget w-full h-full flex flex-col items-center justify-center noise-overlay ${state === 'listening' ? 'glow-border' : ''}`}>
       {/* Central visualizer */}
       <div className="relative flex items-center justify-center">
         {/* Outer rings */}
