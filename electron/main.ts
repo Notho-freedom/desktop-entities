@@ -1,10 +1,7 @@
-import { app, BrowserWindow, ipcMain, globalShortcut } from 'electron';
+import { app, BrowserWindow, ipcMain, globalShortcut, screen } from 'electron';
 import * as path from 'path';
 import { WidgetManager } from './widgetManager';
 import { setupTray } from './tray';
-
-// Handle creating/removing shortcuts on Windows when installing/uninstalling
-
 
 const isDev = process.env.NODE_ENV === 'development';
 const VITE_DEV_SERVER_URL = 'http://localhost:5173';
@@ -56,12 +53,10 @@ app.whenReady().then(async () => {
 
   // Register global hotkeys
   globalShortcut.register('CommandOrControl+Shift+W', () => {
-    // Toggle all widgets visibility
     widgetManager.toggleAllVisibility();
   });
 
   globalShortcut.register('CommandOrControl+Shift+Q', () => {
-    // Quick spawn assistant widget
     widgetManager.createWidget({
       type: 'assistant',
       x: 100,
@@ -71,19 +66,22 @@ app.whenReady().then(async () => {
     });
   });
 
-  // Spawn initial demo widgets
-  if (isDev) {
-    // Status widget - bottom right
-    const { width: screenWidth, height: screenHeight } = require('electron').screen.getPrimaryDisplay().workAreaSize;
-    
-    widgetManager.createWidget({
-      type: 'status',
-      x: screenWidth - 320,
-      y: screenHeight - 200,
-      width: 300,
-      height: 180,
-    });
-  }
+  // ALWAYS spawn at least one initial widget on startup
+  const { width: screenWidth, height: screenHeight } = screen.getPrimaryDisplay().workAreaSize;
+  
+  console.log(`[DESKTOP DOMINATION] Screen size: ${screenWidth}x${screenHeight}`);
+  console.log('[DESKTOP DOMINATION] Spawning initial status widget...');
+  
+  const widgetId = widgetManager.createWidget({
+    type: 'status',
+    x: screenWidth - 320,
+    y: screenHeight - 200,
+    width: 300,
+    height: 180,
+    alwaysOnTop: true,
+  });
+  
+  console.log(`[DESKTOP DOMINATION] Widget created with ID: ${widgetId}`);
 });
 
 app.on('will-quit', () => {
@@ -91,14 +89,19 @@ app.on('will-quit', () => {
 });
 
 app.on('window-all-closed', () => {
-  // Don't quit on window close - we're a tray app
-  // Only quit explicitly via tray menu
+  // Don't quit - we're a tray app
 });
 
 app.on('activate', () => {
-  // On macOS, re-create widgets if none exist
   if (widgetManager && widgetManager.listWidgets().length === 0) {
-    // Could spawn a default widget here
+    const { width: screenWidth, height: screenHeight } = screen.getPrimaryDisplay().workAreaSize;
+    widgetManager.createWidget({
+      type: 'status',
+      x: screenWidth - 320,
+      y: screenHeight - 200,
+      width: 300,
+      height: 180,
+    });
   }
 });
 

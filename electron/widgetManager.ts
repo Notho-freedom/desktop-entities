@@ -26,6 +26,7 @@ export class WidgetManager {
 
   constructor(devServerUrl?: string) {
     this.devServerUrl = devServerUrl;
+    console.log('[WidgetManager] Initialized with devServerUrl:', devServerUrl || 'production');
   }
 
   private generateId(): string {
@@ -35,14 +36,20 @@ export class WidgetManager {
   private getWidgetUrl(type: string): string {
     const route = `/widgets/${type}`;
     if (this.devServerUrl) {
-      return `${this.devServerUrl}${route}`;
+      const url = `${this.devServerUrl}/#${route}`;
+      console.log('[WidgetManager] Loading dev URL:', url);
+      return url;
     }
     // Production: load from file
-    return `file://${path.join(__dirname, '../dist/index.html')}#${route}`;
+    const url = `file://${path.join(__dirname, '../dist/index.html')}#${route}`;
+    console.log('[WidgetManager] Loading production URL:', url);
+    return url;
   }
 
   createWidget(config: WidgetConfig): string {
     const id = config.id || this.generateId();
+    
+    console.log(`[WidgetManager] Creating widget ${id}:`, config);
     
     const win = new BrowserWindow({
       x: config.x,
@@ -51,7 +58,7 @@ export class WidgetManager {
       height: config.height,
       frame: false,
       transparent: true,
-      resizable: false,
+      resizable: true,
       alwaysOnTop: config.alwaysOnTop !== false,
       skipTaskbar: true,
       focusable: true,
@@ -61,9 +68,15 @@ export class WidgetManager {
         contextIsolation: true,
         nodeIntegration: false,
         preload: path.join(__dirname, 'preload.js'),
+        devTools: true, // Enable DevTools
       },
     });
 
+    // CRITICAL: Make sure window is visible
+    win.setOpacity(1.0);
+    win.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
+    win.setAlwaysOnTop(true, 'floating');
+    
     // Set passthrough mode if requested
     if (config.passthrough) {
       win.setIgnoreMouseEvents(true, { forward: true });
@@ -71,15 +84,28 @@ export class WidgetManager {
 
     // Load the widget URL
     const url = this.getWidgetUrl(config.type);
-    win.loadURL(url);
+    
+    win.loadURL(url).then(() => {
+      console.log(`[WidgetManager] Widget ${id} loaded successfully`);
+      win.show(); // Explicitly show the window
+      win.focus(); // Give it focus initially
+    }).catch((err) => {
+      console.error(`[WidgetManager] Failed to load widget ${id}:`, err);
+    });
 
     // Open DevTools in dev mode
     if (this.devServerUrl) {
-      // win.webContents.openDevTools({ mode: 'detach' });
+      win.webContents.openDevTools({ mode: 'detach' });
     }
+
+    // Log console messages from the renderer
+    win.webContents.on('console-message', (event, level, message) => {
+      console.log(`[Widget ${id}] ${message}`);
+    });
 
     // Handle window close
     win.on('closed', () => {
+      console.log(`[WidgetManager] Widget ${id} closed`);
       this.widgets.delete(id);
       this.broadcastEvent('widget:destroyed', { id });
     });
@@ -139,6 +165,7 @@ export class WidgetManager {
     if (!widget) return false;
 
     widget.window.moveTop();
+    widget.window.focus();
     return true;
   }
 
@@ -157,6 +184,8 @@ export class WidgetManager {
 
   toggleAllVisibility(): void {
     const allVisible = Array.from(this.widgets.values()).every(w => w.visible);
+    
+    console.log(`[WidgetManager] Toggling all widgets. Currently all visible: ${allVisible}`);
     
     this.widgets.forEach(widget => {
       if (allVisible) {
@@ -178,6 +207,7 @@ export class WidgetManager {
   }
 
   destroyAll(): void {
+    console.log(`[WidgetManager] Destroying all ${this.widgets.size} widgets`);
     this.widgets.forEach(widget => {
       widget.window.close();
     });
