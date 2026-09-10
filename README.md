@@ -1,33 +1,18 @@
-# Desktop Entities
+# desktop-entities
 
-Desktop productivity application with entity management, widgets, and Electron integration.
+Project description and documentation.
 
 ## 🚀 Features
 
-- 🖥️ **Desktop widgets** - Customizable desktop widgets
-- 📦 **Entity management** - Organize and manage desktop entities
-- 🔌 **Electron integration** - Native desktop app capabilities
-- 🎨 **Modern UI** - Built with Vite, React, and Tailwind
-- 📱 **Cross-platform** - Windows, macOS, Linux support
+- Modern tech stack
+- Responsive design
+- Production ready
 
 ## 🛠️ Tech Stack
 
-- **Frontend**: TypeScript, Vite, React
-- **Desktop**: Electron
-- **Styling**: Tailwind CSS
-- **Build**: Electron Builder
-
-## 📁 Project Structure
-
-`
-desktop-entities/
-├── electron/           # Electron main process
-├── src/
-│   ├── components/     # React components
-│   └── lib/            # Entity logic
-├── public/
-└── package.json
-`
+- TypeScript, Vite, React
+- Tailwind CSS
+- Supabase
 
 ## 🚀 Installation
 
@@ -40,17 +25,14 @@ npm install
 ## 🏃 Running
 
 `ash
-# Development
 npm run dev
-
-# Build desktop app
 npm run build
-npm run dist
+npm run preview
 `
 
 ## 📊 Status
 
-Active development. Core desktop features implemented.
+Active development.
 
 ## 👤 Author
 
