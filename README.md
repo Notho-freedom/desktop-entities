@@ -1,142 +1,61 @@
-# 🖥️ Desktop Domination — Electron Overlay System
+# Desktop Entities
 
-Système d'overlay desktop sans fenêtres traditionnelles — des surfaces UI flottantes et transparentes qui vivent sur le bureau comme un HUD sci-fi.
+Desktop productivity application with entity management, widgets, and Electron integration.
 
-## Quick Start (Local)
+## 🚀 Features
 
-```bash
-# 1. Install dependencies
-npm install
+- 🖥️ **Desktop widgets** - Customizable desktop widgets
+- 📦 **Entity management** - Organize and manage desktop entities
+- 🔌 **Electron integration** - Native desktop app capabilities
+- 🎨 **Modern UI** - Built with Vite, React, and Tailwind
+- 📱 **Cross-platform** - Windows, macOS, Linux support
 
-# 2. Install Electron
-npm install electron electron-builder concurrently wait-on --save-dev
+## 🛠️ Tech Stack
 
-# 3. Add scripts to package.json (see below)
+- **Frontend**: TypeScript, Vite, React
+- **Desktop**: Electron
+- **Styling**: Tailwind CSS
+- **Build**: Electron Builder
 
-# 4. Run in dev mode
-npm run electron:dev
+## 📁 Project Structure
 
-# 5. Build for distribution
-npm run electron:build
-```
-
-## Scripts to Add to package.json
-
-```json
-{
-  "main": "electron/main.js",
-  "scripts": {
-    "electron:dev": "concurrently \"npm run dev\" \"wait-on http://localhost:5173 && tsc -p electron/tsconfig.json && electron .\"",
-    "electron:build": "npm run build && tsc -p electron/tsconfig.json && electron-builder",
-    "electron:preview": "npm run build && tsc -p electron/tsconfig.json && electron ."
-  }
-}
-```
-
-## Create electron/tsconfig.json
-
-```json
-{
-  "compilerOptions": {
-    "target": "ES2020",
-    "module": "commonjs",
-    "lib": ["ES2020"],
-    "outDir": "./",
-    "rootDir": "./",
-    "strict": true,
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
-    "resolveJsonModule": true
-  },
-  "include": ["./**/*.ts"],
-  "exclude": ["node_modules"]
-}
-```
-
-## Project Structure
-
-```
-├── electron/
-│   ├── main.ts          # Electron entry point
-│   ├── widgetManager.ts # Widget lifecycle management
-│   ├── preload.ts       # IPC bridge (renderer ↔ main)
-│   └── tray.ts          # System tray menu
-│
+`
+desktop-entities/
+├── electron/           # Electron main process
 ├── src/
-│   ├── widgets/         # Demo widget components
-│   │   ├── StatusWidget.tsx
-│   │   ├── AssistantWidget.tsx
-│   │   ├── MicWidget.tsx
-│   │   └── CommandWidget.tsx
-│   │
-│   ├── styles/
-│   │   └── terminal.css # Sci-fi terminal design system
-│   │
-│   └── lib/
-│       └── electron.ts  # Type definitions & hooks
-│
-├── electron-builder.json # Build configuration
-└── README.md
-```
+│   ├── components/     # React components
+│   └── lib/            # Entity logic
+├── public/
+└── package.json
+`
 
-## Widget API (from renderer)
+## 🚀 Installation
 
-```typescript
-// Check if running in Electron
-if (window.isElectron) {
-  // Create a widget
-  const widgetId = await window.electron.widgets.create({
-    type: 'assistant',
-    x: 100,
-    y: 100,
-    width: 400,
-    height: 300,
-  });
+`ash
+git clone https://github.com/Notho-freedom/desktop-entities.git
+cd desktop-entities
+npm install
+`
 
-  // Move widget
-  await window.electron.widgets.move(widgetId, { x: 200, y: 200 });
+## 🏃 Running
 
-  // Toggle passthrough (clicks pass through)
-  await window.electron.widgets.setPassthrough(widgetId, true);
+`ash
+# Development
+npm run dev
 
-  // Destroy widget
-  await window.electron.widgets.destroy(widgetId);
+# Build desktop app
+npm run build
+npm run dist
+`
 
-  // Listen for events
-  const unsubscribe = window.electron.on('widget:created', (data) => {
-    console.log('Widget created:', data);
-  });
-}
-```
+## 📊 Status
 
-## Hotkeys
+Active development. Core desktop features implemented.
 
-| Shortcut | Action |
-|----------|--------|
-| `Ctrl+Shift+W` | Toggle all widgets visibility |
-| `Ctrl+Shift+Q` | Quick spawn Assistant widget |
+## 👤 Author
 
-## Widget Types
+[Notho-freedom](https://github.com/Notho-freedom)
 
-- **status** — System stats display (CPU, RAM, uptime)
-- **assistant** — AI response area with typing effect
-- **mic** — Audio visualizer with states
-- **command** — Floating terminal input
+## 📄 License
 
-## Design System (terminal.css)
-
-- CRT scanline effects
-- Phosphor green glow (`#00ff41`)
-- Glitch text animations
-- Pulse indicators
-- Data stream animations
-- Noise grain overlay
-
-## Tips
-
-1. Widgets are frameless, transparent `BrowserWindow` instances
-2. Use `-webkit-app-region: drag` on headers for dragging
-3. Toggle `setIgnoreMouseEvents` for passthrough mode
-4. Each widget loads a different route (`/widgets/status`, etc.)
-5. HashRouter is used for Electron file:// protocol compatibility
+MIT
